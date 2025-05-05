@@ -24,6 +24,8 @@ ROOM_COLOR_MAP = {
 
 def get_room_color(name):
     name = name.lower()
+    if "hallway" in name:
+        return "lightgray"
     for key in ROOM_COLOR_MAP:
         if key in name:
             return ROOM_COLOR_MAP[key]
