@@ -1,30 +1,25 @@
 import json
 import matplotlib.pyplot as plt
-from matplotlib.patches import Polygon, Arc
+from matplotlib.patches import Rectangle
 import matplotlib.lines as mlines
 
-# Load layout
 with open("floorplan_layout.json", "r") as f:
     layout = json.load(f)
 
-rooms = {room["id"]: room for room in layout["rooms"]}
-doors = layout.get("doors", [])
-
-# Color map
-color_map = {
-    "foyer": "#E8E8E8",
-    "hallway": "#D3D3D3",
-    "bedroom": "#CAB8FF",
-    "guest": "#D8BFD8",
-    "kitchen": "#FFC1B6",
-    "dining": "#FFFACD",
-    "closet": "#F5F5DC",
-    "bath": "#ADD8E6",
-    "default": "#C0C0C0"
-}
-
 def get_color(name):
     name = name.lower()
+    color_map = {
+        "foyer": "#E8E8E8",
+        "hallway": "#D3D3D3",
+        "bedroom": "#CAB8FF",
+        "guest": "#D8BFD8",
+        "kitchen": "#FFC1B6",
+        "dining": "#FFFACD",
+        "closet": "#F5F5DC",
+        "bath": "#ADD8E6",
+        "living": "#A9A9A9",
+        "default": "#C0C0C0"
+    }
     for key in color_map:
         if key in name:
             return color_map[key]
@@ -32,52 +27,52 @@ def get_color(name):
 
 fig, ax = plt.subplots(figsize=(10, 10))
 legend_labels = {}
-centers = {}
 
-# Draw rooms
+rendered_doors = set()
+
 for room in layout["rooms"]:
+    x, y, w, h = room["x"], room["y"], room["width"], room["height"]
     color = get_color(room["name"])
-    points = room["points"]
-    poly = Polygon(points, closed=True, facecolor=color, edgecolor="black", linewidth=2.5)
-    ax.add_patch(poly)
-    cx = sum(p[0] for p in points) / len(points)
-    cy = sum(p[1] for p in points) / len(points)
-    centers[room["id"]] = (cx, cy)
-    ax.text(cx, cy, room["name"], ha="center", va="center", fontsize=9, weight="bold")
+    rect = Rectangle((x, y), w, h, facecolor=color, edgecolor='black', linewidth=2.5)
+    ax.add_patch(rect)
+    ax.text(x + w/2, y + h/2, room["name"], ha="center", va="center", fontsize=9, weight="bold")
     legend_labels[room["name"]] = color
 
-# Draw door arcs between rooms
-for door in doors:
-    r1, r2 = rooms[door["from"]], rooms[door["to"]]
-    c1x, c1y = centers[r1["id"]]
-    c2x, c2y = centers[r2["id"]]
-    mx = (c1x + c2x) / 2
-    my = (c1y + c2y) / 2
-    dx = c2x - c1x
-    dy = c2y - c1y
-    angle = 0
-    if abs(dx) > abs(dy):
-        angle = 0 if dx > 0 else 180
-    else:
-        angle = 90 if dy > 0 else 270
-    ax.add_patch(Arc((mx, my), 0.6, 0.6, angle=angle, theta1=0, theta2=180, color='red', linewidth=1.5))
+    for door in room.get("doors", []):
+        other_id = door["to"]
+        pair = tuple(sorted([room["id"], other_id]))
+        if pair in rendered_doors:
+            continue  # skip duplicate rendering
 
-# Fix axis limits to ensure visibility
-all_x = [p[0] for room in layout["rooms"] for p in room["points"]]
-all_y = [p[1] for room in layout["rooms"] for p in room["points"]]
-ax.set_xlim(min(all_x) - 2, max(all_x) + 2)
-ax.set_ylim(min(all_y) - 2, max(all_y) + 2)
+        # Mark this pair as rendered
+        rendered_doors.add(pair)
 
-# Final formatting
+        side = door["side"]
+        if side == "top":
+            dx, dy = x + w/2 - 0.25, y + h
+            ax.plot([dx, dx + 0.5], [dy, dy], color='green', linewidth=4)
+        elif side == "bottom":
+            dx, dy = x + w/2 - 0.25, y
+            ax.plot([dx, dx + 0.5], [dy, dy], color='green', linewidth=4)
+        elif side == "left":
+            dx, dy = x, y + h/2 - 0.25
+            ax.plot([dx, dx], [dy, dy + 0.5], color='green', linewidth=4)
+        elif side == "right":
+            dx, dy = x + w, y + h/2 - 0.25
+            ax.plot([dx, dx], [dy, dy + 0.5], color='green', linewidth=4)
+
+all_x = [r["x"] for r in layout["rooms"]] + [r["x"] + r["width"] for r in layout["rooms"]]
+all_y = [r["y"] for r in layout["rooms"]] + [r["y"] + r["height"] for r in layout["rooms"]]
+ax.set_xlim(min(all_x) - 1, max(all_x) + 1)
+ax.set_ylim(min(all_y) - 1, max(all_y) + 1)
 ax.set_aspect("equal")
 ax.axis("off")
-ax.set_title("2D Floor Plan View with Walls and Doorways")
+ax.set_title("2D Floor Plan with Clean Door Mapping")
 
-# Add legend
 handles = [mlines.Line2D([], [], color=color, marker='s', linestyle='None',
                          markersize=10, label=name) for name, color in legend_labels.items()]
 ax.legend(handles=handles, loc="upper right")
 
 plt.tight_layout()
-plt.savefig("floorplan_topview.png", dpi=150)
+plt.savefig("floorplan_simplified.png", dpi=150)
 plt.show()

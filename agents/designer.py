@@ -1,15 +1,14 @@
 from spade.agent import Agent
 from spade.behaviour import CyclicBehaviour
 from spade.message import Message
-from collections import defaultdict
 import json
 
 class DesignerAgent(Agent):
-    class RoomClusteringBehaviour(CyclicBehaviour):
+    class RoomLayoutBehaviour(CyclicBehaviour):
         def __init__(self):
             super().__init__()
             self.rooms = {}
-            self.received_done = False
+            self.done = False
 
         async def run(self):
             msg = await self.receive(timeout=10)
@@ -21,125 +20,96 @@ class DesignerAgent(Agent):
             if msg_type == "room_data":
                 room = json.loads(msg.body)
                 self.rooms[room["room_id"]] = room
-                print(f"[DesignerAgent] Received room: {room['room_name']}")
+                print(f"[DesignerAgent] Received: {room['room_name']}")
             elif msg_type == "done":
-                print("[DesignerAgent] Received DONE signal")
-                self.received_done = True
+                self.done = True
 
-            if self.received_done and self.rooms:
-                self.create_clusters()
-                self.generate_grid_based_layout()
+            if self.done and self.rooms:
+                self.generate_layout()
                 await self.agent.stop()
 
-        def create_clusters(self):
-            self.clusters = defaultdict(list)
-            visited = set()
-
-            def dfs(room_id, cluster_id):
-                if room_id in visited:
-                    return
-                visited.add(room_id)
-                self.clusters[cluster_id].append(room_id)
-                for neighbor in self.rooms[room_id].get("connect_to", []):
-                    if neighbor in self.rooms:
-                        dfs(neighbor, cluster_id)
-
-            cluster_id = 0
-            for room_id in self.rooms:
-                if room_id not in visited:
-                    dfs(room_id, cluster_id)
-                    cluster_id += 1
-
-        def generate_grid_based_layout(self):
-            GRID_SIZE = 50
-            CELL_SIZE = 1.0
-            grid = [[None for _ in range(GRID_SIZE)] for _ in range(GRID_SIZE)]
-            layout = {"rooms": [], "doors": []}
+        def generate_layout(self):
             placed = {}
-            edges = {}
+            layout = {"rooms": []}
+            spacing = 0
 
-            def is_free(gx, gy, w, h):
-                if gx < 0 or gy < 0 or gx + w > GRID_SIZE or gy + h > GRID_SIZE:
-                    return False
-                for i in range(h):
-                    for j in range(w):
-                        if grid[gy + i][gx + j] is not None:
-                            return False
-                return True
-
-            def place_room(room_id, gx, gy, w, h):
-                for i in range(h):
-                    for j in range(w):
-                        grid[gy + i][gx + j] = room_id
-                placed[room_id] = (gx, gy, w, h)
-                edges[room_id] = [
-                    ((gx, gy), (gx + w, gy)),  # top
-                    ((gx + w, gy), (gx + w, gy + h)),  # right
-                    ((gx + w, gy + h), (gx, gy + h)),  # bottom
-                    ((gx, gy + h), (gx, gy))  # left
-                ]
-
-            def find_adjacent_spot(conn_room_id, w, h):
-                gx, gy, gw, gh = placed[conn_room_id]
-                candidates = [
-                    (gx + gw, gy),
-                    (gx - w, gy),
-                    (gx, gy + gh),
-                    (gx, gy - h)
-                ]
-                for nx, ny in candidates:
-                    if is_free(nx, ny, w, h):
-                        return nx, ny
-                return None
-
-            center_x = GRID_SIZE // 2
-            center_y = GRID_SIZE // 2
-            for room_id, room in self.rooms.items():
-                if room["room_name"].lower() == "hallway":
-                    width = max(2, round(room["min_width"] / 1000))
-                    height = max(2, round(room["desired_area"] / width))
-                    place_room(room_id, center_x, center_y, width, height)
-                    break
-
-            for room_id, room in self.rooms.items():
-                if room_id in placed:
-                    continue
-                for conn in room.get("connect_to", []):
-                    if conn in placed:
-                        width = max(2, round(room["min_width"] / 1000))
-                        height = max(2, round(room["desired_area"] / width))
-                        spot = find_adjacent_spot(conn, width, height)
-                        if spot:
-                            nx, ny = spot
-                            place_room(room_id, nx, ny, width, height)
-                            layout["doors"].append({"from": room_id, "to": conn})
-                            break
-
-            for room_id, (gx, gy, w, h) in placed.items():
-                x = gx * CELL_SIZE
-                y = gy * CELL_SIZE
-                points = [
-                    [x, y],
-                    [x + w * CELL_SIZE, y],
-                    [x + w * CELL_SIZE, y + h * CELL_SIZE],
-                    [x, y + h * CELL_SIZE]
-                ]
-                room = self.rooms[room_id]
-                layout["rooms"].append({
+            def place_room(room_id, room, x, y, width, height):
+                placed[room_id] = {
                     "id": room_id,
                     "name": room["room_name"],
-                    "points": points,
-                    "area": room["desired_area"],
-                    "public_access": room["public_access"],
-                    "connected_to": room.get("connect_to", []),
-                    "orientation": room.get("orientation", "any"),
-                    "open_sides": room.get("open_sides", "preferred-1")
-                })
+                    "x": x,
+                    "y": y,
+                    "width": width,
+                    "height": height,
+                    "doors": []
+                }
+
+            def get_room_dimensions(room):
+                w = max(2, round(room["min_width"] / 1000))
+                h = max(2, round(room["desired_area"] / w))
+                return w, h
+
+            # Place hallway first at center
+            origin_x, origin_y = 20, 20
+            for rid, room in self.rooms.items():
+                if room["room_name"].lower() == "hallway":
+                    w, h = get_room_dimensions(room)
+                    place_room(rid, room, origin_x, origin_y, w, h)
+                    break
+
+            # Place all unplaced rooms based on placed ones
+            unplaced = [r for r in self.rooms if r not in placed]
+
+            while unplaced:
+                placed_this_round = False
+
+                for rid in list(unplaced):  # clone list to modify unplaced safely
+                    room = self.rooms[rid]
+                    for conn in room.get("connect_to", []):
+                        if conn in placed:
+                            # get dimensions of new room
+                            rw = max(2, round(room["min_width"] / 1000))
+                            rh = max(2, round(room["desired_area"] / rw))
+
+                            # connected room info
+                            ref = placed[conn]
+                            cx, cy, cw, ch = ref["x"], ref["y"], ref["width"], ref["height"]
+
+                            # Try placing on all 4 sides
+                            candidates = {
+                                "top":    (cx, cy + ch + spacing, "bottom", "top"),
+                                "bottom": (cx, cy - rh - spacing, "top", "bottom"),
+                                "right":  (cx + cw + spacing, cy, "left", "right"),
+                                "left":   (cx - rw - spacing, cy, "right", "left"),
+                            }
+
+                            for side, (nx, ny, this_side, other_side) in candidates.items():
+                                # check for overlap with placed rooms
+                                overlap = any(
+                                    abs(nx - p["x"]) < p["width"] and
+                                    abs(ny - p["y"]) < p["height"]
+                                    for pid, p in placed.items()
+                                )
+                                if not overlap:
+                                    place_room(rid, room, nx, ny, rw, rh)
+                                    placed[rid]["doors"].append({"side": this_side, "to": conn})
+                                    placed[conn]["doors"].append({"side": other_side, "to": rid})
+                                    unplaced.remove(rid)
+                                    placed_this_round = True
+                                    break
+                            break  # stop after first valid placement attempt
+
+                if not placed_this_round:
+                    print(f"[DesignerAgent] Could not place these rooms: {unplaced}")
+                    break
+
+
+            layout["rooms"] = list(placed.values())
 
             with open("floorplan_layout.json", "w") as f:
                 json.dump(layout, f, indent=4)
-            print("[DesignerAgent] Final layout with door edge awareness generated.")
+            print("[DesignerAgent] Wrote aligned layout with correct door placement.")
 
     async def setup(self):
         print("[DesignerAgent] Starting...")
-        self.add_behaviour(self.RoomClusteringBehaviour())
+        self.add_behaviour(self.RoomLayoutBehaviour())
