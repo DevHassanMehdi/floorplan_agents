@@ -231,3 +231,4 @@ cython_debug/
 floorplan_layout.json
 floorplan_simplified.png
 room_specs.json
+floorplan.svg

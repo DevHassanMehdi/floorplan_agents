@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Progress</title>
+  <meta http-equiv="refresh" content="3" />
+  <style>
+    body {
+      background: #121212;
+      color: #e0e0e0;
+      font-family: sans-serif;
+      padding: 20px;
+    }
+
+    h2 {
+      text-align: center;
+    }
+
+    .log-box {
+      background: #1e1e1e;
+      border: 1px solid #444;
+      padding: 15px;
+      border-radius: 8px;
+      max-height: 300px;
+      overflow-y: auto;
+      margin-bottom: 20px;
+    }
+
+    .status {
+      font-size: 1.2rem;
+      margin-bottom: 20px;
+    }
+
+    #svg-container {
+      border: 1px solid #666;
+      background: #fff;
+      border-radius: 8px;
+      padding: 10px;
+      overflow-x: auto;
+      max-height: 80vh;
+      cursor: zoom-in;
+    }
+
+    .footer {
+      margin-top: 40px;
+      text-align: center;
+      font-size: 0.9rem;
+      color: #888;
+    }
+  </style>
+</head>
+<body>
+  <h2>🛠️ Floorplan Generator Pipeline</h2>
+
+<h3>📜 Console Log</h3>
+<div class="log-box" style="max-height: 250px; overflow-y: auto; background: #1e1e1e; border: 1px solid #555; padding: 12px; font-family: monospace; font-size: 14px; border-radius: 8px;">
+  {% for line in logs %}
+    <div>{{ line }}</div>
+  {% endfor %}
+</div>
+
+
+  <div class="status">
+    {% if done %}
+    ✅ All agents finished. Floorplan is ready below.
+    {% else %}
+    ⏳ Agents are running... Please wait. Page refreshes every 3 seconds.
+    {% endif %}
+  </div>
+
+  {% if done %}
+  <h3>🖼️ Final Floorplan (SVG)</h3>
+  <div id="svg-container" ondblclick="zoomSVG(this)">
+    <object data="{{ url_for('static', filename='floorplan.svg') }}?v={{ range(1000)|random }}" type="image/svg+xml" width="100%" height="600px">
+      SVG preview not supported.
+    </object>
+  </div>
+  {% endif %}
+
+  <div class="footer">
+    Rendered by Floorplan MAS | &copy; 2025
+  </div>
+
+  <script>
+    function zoomSVG(container) {
+      container.style.transform =
+        container.style.transform === "scale(2)" ? "scale(1)" : "scale(2)";
+      container.style.transformOrigin = "center";
+      container.style.transition = "transform 0.3s ease";
+    };
+     window.onload = function () {
+    const logBox = document.querySelector('.log-box');
+    logBox.scrollTop = logBox.scrollHeight;
+  };
+  </script>
+</body>
+</html>
