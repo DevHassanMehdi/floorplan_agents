@@ -1,6 +1,8 @@
 # 🧠 Intelligent Floorplan Generator with SPADE Agents
 
-This project implements an intelligent multi-agent system using [SPADE](https://spade-mas.readthedocs.io/) and a Flask web interface to generate and visualize intelligent floorplans based on structured room requirements. It showcases how autonomous agents can communicate and coordinate to produce optimized architectural layouts.
+This project implements an intelligent multi-agent system using [SPADE](https://spade-mas.readthedocs.io/) and a Flask
+web interface to generate and visualize intelligent floorplans based on structured room requirements. It showcases how
+autonomous agents can communicate and coordinate to produce optimized architectural layouts.
 
 ---
 
@@ -24,6 +26,36 @@ floorplan_agents/
 ├── app.py                     # Flask web app
 ├── floorplan_layout.json      # Output JSON from designer
 └── README.md                  # You are here
+```
+
+---
+
+## ⚙️ Requirements
+
+- Python 3.10
+- Flask
+- SPADE
+- matplotlib
+
+---
+
+## 🧪 Conda Environment Setup (Recommended)
+
+To isolate dependencies and ensure reproducibility, you can use a conda environment:
+
+```bash
+# Step 1: Create a new conda environment for Python 3.10
+conda create -n floorplan-env python=3.10 -y
+
+# Step 2: Activate the environment
+conda activate floorplan-env
+
+# Step 3: Install dependencies
+pip install -r requirements.txt
+
+# Step 4: Run the Flask app
+export FLASK_APP=app.py
+flask run
 ```
 
 ---
@@ -52,11 +84,13 @@ flask run
 This system uses **four core agents** communicating via **XMPP**:
 
 ### 🔹 DataCollectorAgent
+
 - Collects user room specs (via web UI)
 - Sends data to DesignerAgent using SPADE messages
 - Triggers pipeline execution with a `done` signal
 
 ### 🔹 DesignerAgent
+
 - Receives room specs
 - Places hallway first, then arranges connected rooms
 - Applies snapping and spacing rules
@@ -64,14 +98,16 @@ This system uses **four core agents** communicating via **XMPP**:
 - Outputs geometry in `floorplan_layout.json`
 
 ### 🔹 ReviewerAgent
+
 - Reads the generated floorplan and compares it to specs
 - Scores layout based on:
-  - Floor area usage
-  - Accuracy to desired room sizes
-  - Rectangularity of building
+    - Floor area usage
+    - Accuracy to desired room sizes
+    - Rectangularity of building
 - Marks design as ✅ Approved or ❌ Rejected
 
 ### 🔹 DecisionMakerAgent
+
 - In future: Will choose best layout from multiple options
 - Currently: Confirms review result and passes to visualizer
 
@@ -100,20 +136,7 @@ SVG visualization is generated and saved in `static/floorplan.svg`. Features inc
 
 ---
 
-## ⚙️ Requirements
-
-- Python 3.10
-- Flask
-- SPADE
-- matplotlib
-
-Install with:
-
-```bash
-pip install flask spade matplotlib
-```
-
----
+Visit `http://127.0.0.1:5000/` to access the floorplan generator.
 
 ## 🔐 XMPP Setup
 
@@ -155,3 +178,5 @@ Powered by **SPADE**, **matplotlib**, and **Flask**
 ## 📜 License
 
 MIT License. Free to use, extend, and contribute.
+
+---
