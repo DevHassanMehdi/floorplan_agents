@@ -3,6 +3,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 import json
 
+
 class DesignerAgent(Agent):
     class RoomLayoutBehaviour(CyclicBehaviour):
         def __init__(self):
@@ -77,10 +78,10 @@ class DesignerAgent(Agent):
 
                             # Try placing on all 4 sides
                             candidates = {
-                                "top":    (cx, cy + ch + spacing, "bottom", "top"),
+                                "top": (cx, cy + ch + spacing, "bottom", "top"),
                                 "bottom": (cx, cy - rh - spacing, "top", "bottom"),
-                                "right":  (cx + cw + spacing, cy, "left", "right"),
-                                "left":   (cx - rw - spacing, cy, "right", "left"),
+                                "right": (cx + cw + spacing, cy, "left", "right"),
+                                "left": (cx - rw - spacing, cy, "right", "left"),
                             }
 
                             for side, (nx, ny, this_side, other_side) in candidates.items():
@@ -102,7 +103,6 @@ class DesignerAgent(Agent):
                 if not placed_this_round:
                     print(f"[DesignerAgent] Could not place these rooms: {unplaced}")
                     break
-
 
             layout["rooms"] = list(placed.values())
 

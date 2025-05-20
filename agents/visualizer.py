@@ -4,6 +4,7 @@ from matplotlib.patches import Rectangle
 from matplotlib.backends.backend_svg import FigureCanvasSVG
 import matplotlib.lines as mlines
 
+
 def get_color(name):
     name = name.lower()
     color_map = {
@@ -23,6 +24,7 @@ def get_color(name):
             return color_map[key]
     return color_map["default"]
 
+
 def save_floorplan_svg():
     try:
         with open("floorplan_layout.json", "r") as f:
@@ -40,7 +42,7 @@ def save_floorplan_svg():
         x, y, w, h = room["x"], room["y"], room["width"], room["height"]
         color = get_color(room["name"])
         ax.add_patch(Rectangle((x, y), w, h, facecolor=color, edgecolor='black', linewidth=2))
-        ax.text(x + w/2, y + h/2, room["name"], ha="center", va="center", fontsize=9)
+        ax.text(x + w / 2, y + h / 2, room["name"], ha="center", va="center", fontsize=9)
         legend_labels[room["name"]] = color
 
         for door in room.get("doors", []):
@@ -52,16 +54,16 @@ def save_floorplan_svg():
 
             side = door["side"]
             if side == "top":
-                dx, dy = x + w/2 - 0.25, y + h
+                dx, dy = x + w / 2 - 0.25, y + h
                 ax.plot([dx, dx + 0.5], [dy, dy], color='green', linewidth=4)
             elif side == "bottom":
-                dx, dy = x + w/2 - 0.25, y
+                dx, dy = x + w / 2 - 0.25, y
                 ax.plot([dx, dx + 0.5], [dy, dy], color='green', linewidth=4)
             elif side == "left":
-                dx, dy = x, y + h/2 - 0.25
+                dx, dy = x, y + h / 2 - 0.25
                 ax.plot([dx, dx], [dy, dy + 0.5], color='green', linewidth=4)
             elif side == "right":
-                dx, dy = x + w, y + h/2 - 0.25
+                dx, dy = x + w, y + h / 2 - 0.25
                 ax.plot([dx, dx], [dy, dy + 0.5], color='green', linewidth=4)
 
     if rooms:

@@ -5,6 +5,7 @@ from spade.behaviour import CyclicBehaviour
 from spade.message import Message
 import json
 
+
 class DecisionMakerAgent(Agent):
     class CollectScoresBehaviour(CyclicBehaviour):
         def __init__(self):
