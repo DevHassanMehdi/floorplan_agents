@@ -1,23 +1,60 @@
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="light">
 <head>
   <meta charset="UTF-8" />
   <title>Floorplan Generator</title>
   <style>
+    :root {
+      --bg: #ffffff;
+      --text: #222222;
+      --card: #f5f5f5;
+      --border: #cccccc;
+    }
+    [data-theme="dark"] {
+      --bg: #121212;
+      --text: #e0e0e0;
+      --card: #1e1e1e;
+      --border: #444444;
+    }
+
     body {
-      background-color: #121212;
-      color: #e0e0e0;
+      background-color: var(--bg);
+      color: var(--text);
       font-family: sans-serif;
       padding: 20px;
       font-size: 18px;
     }
 
+    .navbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 20px;
+      margin-bottom: 20px;
+    }
+
+    .navbar a {
+      text-decoration: none;
+      font-size: 18px;
+      color: var(--text);
+    }
+
+    .navbar button {
+      padding: 8px 14px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+
     .container {
       max-width: 1000px;
       margin: auto;
-      background: #1e1e1e;
+      background: var(--card);
       padding: 30px;
       border-radius: 12px;
+      border: 1px solid var(--border);
     }
 
     h1 {
@@ -26,11 +63,12 @@
     }
 
     .room {
-      border: 2px solid #444;
+      border: 2px solid var(--border);
       border-radius: 10px;
       padding: 20px;
       margin-bottom: 25px;
       position: relative;
+      background: var(--card);
     }
 
     .remove-btn {
@@ -58,9 +96,9 @@
       padding: 12px;
       font-size: 17px;
       border-radius: 6px;
-      border: 1px solid #555;
-      background: #181818;
-      color: #e0e0e0;
+      border: 1px solid var(--border);
+      background: var(--bg);
+      color: var(--text);
     }
 
     .actions {
@@ -79,19 +117,17 @@
       border-radius: 8px;
       cursor: pointer;
     }
-
-    #theme-toggle {
-      float: right;
-      font-size: 15px;
-      margin-bottom: 20px;
-    }
   </style>
 </head>
 <body>
-  <div class="container">
-    <button id="theme-toggle">🌓 Toggle Theme</button>
-    <h1>🏗️ Floorplan Generator</h1>
+  <div class="navbar">
+    <a href="{{ url_for('index') }}">🏠 Home</a>
+    <a href="{{ url_for('progress') }}">🚧 Progress</a>
+    <button id="theme-toggle">🌓 Theme</button>
+  </div>
 
+  <div class="container">
+    <h1>🏗️ Floorplan Generator</h1>
     <form method="POST" action="{{ url_for('generate') }}" onsubmit="return packageRooms();">
       <input type="hidden" name="room_data" id="room_data">
       <div id="room-list"></div>
@@ -103,7 +139,7 @@
   </div>
 
 <script>
-let roomList = document.getElementById("room-list");
+const roomList = document.getElementById("room-list");
 
 const defaultRooms = [
   {
@@ -226,11 +262,17 @@ window.onload = () => {
   for (let r of defaultRooms) {
     addRoomFromData(r);
   }
+
+  const html = document.documentElement;
+  const savedTheme = localStorage.getItem("theme") || "light";
+  html.setAttribute("data-theme", savedTheme);
 };
 
 document.getElementById("theme-toggle").onclick = () => {
   const html = document.documentElement;
-  html.setAttribute("data-theme", html.getAttribute("data-theme") === "dark" ? "light" : "dark");
+  const next = html.getAttribute("data-theme") === "dark" ? "light" : "dark";
+  html.setAttribute("data-theme", next);
+  localStorage.setItem("theme", next);
 };
 </script>
 </body>
