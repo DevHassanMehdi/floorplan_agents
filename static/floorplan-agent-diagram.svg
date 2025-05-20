@@ -1,0 +1,108 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 800 600" xmlns="http://www.w3.org/2000/svg">
+  <!-- Styles -->
+  <defs>
+    <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto">
+      <polygon points="0 0, 10 3.5, 0 7" fill="#88CCFF" />
+    </marker>
+  </defs>
+  
+  <style>
+    svg {
+      background-color: #0A1929;
+    }
+    .agent-box {
+      rx: 15;
+      ry: 15;
+      stroke-width: 2;
+    }
+    .user-box {
+      fill: #144272;
+      stroke: #205295;
+    }
+    .agent {
+      fill: #0A2647;
+      stroke: #144272;
+    }
+    .visualizer {
+      fill: #2C74B3;
+      stroke: #205295;
+    }
+    .arrow {
+      stroke: #88CCFF;
+      stroke-width: 2;
+      fill: none;
+      marker-end: url(#arrowhead);
+    }
+    text {
+      font-family: Arial, sans-serif;
+      text-anchor: middle;
+      dominant-baseline: middle;
+      fill: #FFFFFF;
+    }
+    .agent-title {
+      font-weight: bold;
+      font-size: 16px;
+    }
+    .agent-desc {
+      font-size: 12px;
+      fill: #B0D8FF;
+    }
+    .flow-label {
+      font-size: 12px;
+      fill: #88CCFF;
+    }
+  </style>
+  
+  <!-- User/UI box -->
+  <rect class="agent-box user-box" x="300" y="40" width="200" height="70" />
+  <text class="agent-title" x="400" y="65">User / UI</text>
+  <text class="agent-desc" x="400" y="90">Web form (HTML + Flask)</text>
+  
+  <!-- Vertical flow arrow 1 -->
+  <path class="arrow" d="M400 110 L400 150" />
+  <text class="flow-label" x="430" y="130">room_specs[]</text>
+  
+  <!-- DataCollectorAgent box -->
+  <rect class="agent-box agent" x="300" y="150" width="200" height="70" />
+  <text class="agent-title" x="400" y="175">DataCollectorAgent</text>
+  <text class="agent-desc" x="400" y="200">Structures room data</text>
+  
+  <!-- Vertical flow arrow 2 -->
+  <path class="arrow" d="M400 220 L400 260" />
+  <text class="flow-label" x="450" y="240">"room_data" messages</text>
+  
+  <!-- DesignerAgent box -->
+  <rect class="agent-box agent" x="300" y="260" width="200" height="70" />
+  <text class="agent-title" x="400" y="285">DesignerAgent</text>
+  <text class="agent-desc" x="400" y="310">Computes layout &amp; geometry</text>
+  
+  <!-- Split arrows -->
+  <path class="arrow" d="M400 330 L400 350 L250 350 L250 370" />
+  <path class="arrow" d="M400 330 L400 350 L550 350 L550 370" />
+  
+  <!-- ReviewerAgent box -->
+  <rect class="agent-box agent" x="150" y="370" width="200" height="70" />
+  <text class="agent-title" x="250" y="395">ReviewerAgent</text>
+  <text class="agent-desc" x="250" y="420">Analyzes layout quality</text>
+  
+  <!-- DecisionMakerAgent box -->
+  <rect class="agent-box agent" x="450" y="370" width="200" height="70" />
+  <text class="agent-title" x="550" y="395">DecisionMakerAgent</text>
+  <text class="agent-desc" x="550" y="420">Approves final design</text>
+  
+  <!-- Connecting arrow from Reviewer to Decision -->
+  <path class="arrow" d="M350 405 L450 405" />
+  <text class="flow-label" x="400" y="390">score + verdict</text>
+  
+  <!-- Final arrow to Visualizer -->
+  <path class="arrow" d="M550 440 L550 460 L400 460 L400 480" />
+  
+  <!-- Visualizer box -->
+  <rect class="agent-box visualizer" x="300" y="480" width="200" height="70" />
+  <text class="agent-title" x="400" y="505">Visualizer</text>
+  <text class="agent-desc" x="400" y="530">Generates SVG output</text>
+  
+  <!-- Final output note -->
+  <text class="agent-desc" x="400" y="565">Output: static/floorplan.svg</text>
+</svg>

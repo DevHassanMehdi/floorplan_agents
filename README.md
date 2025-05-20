@@ -180,3 +180,7 @@ Powered by **SPADE**, **matplotlib**, and **Flask**
 MIT License. Free to use, extend, and contribute.
 
 ---
+
+![Agent Interaction Diagram](static/floorplan-agent-diagram.svg)
+
+---
