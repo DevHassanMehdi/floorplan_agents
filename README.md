@@ -1,72 +1,123 @@
 # 🧠 Intelligent Floorplan Generator with SPADE Agents
 
-This project implements an intelligent multi-agent system using [SPADE](https://spade-mas.readthedocs.io/) to generate and visualize floorplans from room requirements. The system includes autonomous agents that collect room specifications, process spatial layouts, and output a visualized design.
+This project implements an intelligent multi-agent system using [SPADE](https://spade-mas.readthedocs.io/) and a Flask web interface to generate and visualize intelligent floorplans based on structured room requirements. It showcases how autonomous agents can communicate and coordinate to produce optimized architectural layouts.
 
 ---
 
-## 📁 Project Structure
+## 🗂️ Project Structure
 
 ```
 floorplan_agents/
 ├── agents/
-│   ├── data_collector.py      # Sends room requirements to DesignerAgent
-│   ├── designer.py            # Processes room layout and outputs geometry
-├── config.py                  # XMPP credentials for both agents
-├── main.py                    # Launches both SPADE agents
-├── visualizer.py              # Draws room layout using matplotlib
-├── floorplan_layout.json      # Output JSON with room geometry
-└── README.md                  # 📘 You are here
+│   ├── data_collector.py      # Sends room specs to designer
+│   ├── designer.py            # Lays out rooms in snapped positions
+│   ├── reviewer.py            # Scores layout based on quality criteria
+│   ├── decision_maker.py      # Selects best layout if multiple exist
+│   ├── visualizer.py          # Generates annotated SVG of layout
+├── templates/
+│   ├── index.html             # Form UI for adding room requirements
+│   ├── progress.html          # Shows logs, progress and final SVG
+├── static/
+│   └── floorplan.svg          # Final generated SVG layout
+├── config.py                  # Agent XMPP credentials
+├── main.py                    # Original CLI runner (replaced by Flask)
+├── app.py                     # Flask web app
+├── floorplan_layout.json      # Output JSON from designer
+└── README.md                  # You are here
 ```
 
 ---
 
-## 🤖 Agents
+## 🌐 How to Use the Web App
 
-### `DataCollectorAgent`
-- Sends structured room specs to `DesignerAgent`
-- Sends a final `"done"` message to trigger processing
-
-### `DesignerAgent`
-- Receives rooms and organizes them into clusters
-- Computes spatial layout and dimensions
-- Exports `floorplan_layout.json`
-
----
-
-## 🖼️ Visualization
-
-The layout is visualized using `matplotlib`:
-- Rooms are colored by type (e.g., kitchen, hallway)
-- Labels are centered
-- Grid spacing avoids overlaps
-- An optional legend improves readability
-
----
-
-## 📦 Requirements
-
-- Python 3.10
-- matplotlib
-- [Conda environment (recommended)](https://docs.conda.io/projects/conda/en/latest/user-guide/tasks/manage-environments.html)
-
-Install dependencies:
+1. Launch the Flask server:
 
 ```bash
-pip install spade matplotlib
+export FLASK_APP=app.py
+flask run
+```
+
+2. Visit `http://127.0.0.1:5000/` in your browser.
+
+3. Use the form to add rooms, connect them, and set preferences.
+
+4. Click **Generate Floorplan**.
+
+5. View pipeline progress and final layout in SVG.
+
+---
+
+## 🧠 Technical Agent Architecture
+
+This system uses **four core agents** communicating via **XMPP**:
+
+### 🔹 DataCollectorAgent
+- Collects user room specs (via web UI)
+- Sends data to DesignerAgent using SPADE messages
+- Triggers pipeline execution with a `done` signal
+
+### 🔹 DesignerAgent
+- Receives room specs
+- Places hallway first, then arranges connected rooms
+- Applies snapping and spacing rules
+- Ensures rooms align with connection and hallway logic
+- Outputs geometry in `floorplan_layout.json`
+
+### 🔹 ReviewerAgent
+- Reads the generated floorplan and compares it to specs
+- Scores layout based on:
+  - Floor area usage
+  - Accuracy to desired room sizes
+  - Rectangularity of building
+- Marks design as ✅ Approved or ❌ Rejected
+
+### 🔹 DecisionMakerAgent
+- In future: Will choose best layout from multiple options
+- Currently: Confirms review result and passes to visualizer
+
+---
+
+## 🎨 Visualization
+
+SVG visualization is generated and saved in `static/floorplan.svg`. Features include:
+
+- Color-coded rooms
+- Room labels and dimensions
+- Smart door rendering (based on shared walls)
+- Legend and scaling
+- Zoom and open in new tab from web UI
+
+---
+
+## ✅ Features
+
+- ✅ Multi-agent SPADE system (XMPP-based)
+- ✅ Modular Flask UI with live logs
+- ✅ Add/edit/delete rooms via form
+- ✅ Constraint-based spatial design logic
+- ✅ Reviewer scoring logic for optimization
+- ✅ Theme toggle, navigation bar, SVG rendering
+
+---
+
+## ⚙️ Requirements
+
+- Python 3.10
+- Flask
+- SPADE
+- matplotlib
+
+Install with:
+
+```bash
+pip install flask spade matplotlib
 ```
 
 ---
 
 ## 🔐 XMPP Setup
 
-This project uses public XMPP servers (like `xmpp.jp`) for agent communication.
-
-Create two users:
-
-- `data_collector@xmpp.jp`
-- `my_designer@xmpp.jp`
-
-Update `config.py`:
+Register free accounts at [xmpp.jp](https://xmpp.jp) or similar. Update `config.py`:
 
 ```python
 DATA_COLLECTOR_JID = "data_collector@xmpp.jp"
@@ -74,73 +125,33 @@ DATA_COLLECTOR_PASS = "your_password"
 
 DESIGNER_JID = "my_designer@xmpp.jp"
 DESIGNER_PASS = "your_password"
+
+REVIEWER_JID = "reviewer_agent@xmpp.jp"
+REVIEWER_PASS = "your_password"
+
+DECISION_MAKER_JID = "decision_agent@xmpp.jp"
+DECISION_MAKER_PASS = "your_password"
 ```
 
 ---
 
-## 🚀 How to Run
+## 🔮 Planned Enhancements
 
-1. Run the SPADE agents:
-
-```bash
-python main.py
-```
-
-This will:
-- Start both agents
-- Send room definitions
-- Generate and save the layout JSON
-
-2. Visualize the layout:
-
-```bash
-python visualizer.py
-```
+- Reviewer for room orientation and open sides
+- Multiple layout variants for DecisionMakerAgent
+- Tabbed SVG viewer and legend
+- Export as PDF or DXF
+- User authentication for room presets
 
 ---
 
-## 🎨 Output Example
+## 👨‍💻 Authors
 
-- Rooms are rendered with colors like:
-
-| Room Type  | Color         |
-|------------|---------------|
-| Living Room | lightblue     |
-| Kitchen     | coral         |
-| Bedroom     | plum          |
-| Bathroom    | lightgreen    |
-| Toilet      | lightsalmon   |
-| Hallway     | gray          |
-
----
-
-## 📌 Features
-
-✅ Multi-agent communication using XMPP  
-✅ Arbitrary number of rooms  
-✅ Automatic layout generation  
-✅ JSON export of geometric plan  
-✅ Matplotlib-based visualizer with color coding  
-✅ Legend, labels, and spacing adjustments  
-
----
-
-## 🛠️ Future Extensions
-
-- Room shape generalization (e.g., L-shapes)
-- Hallway access enforcement
-- Export to SVG or DXF
-- Layout optimization (fitness scoring)
-
----
-
-## 🧑‍💻 Author
-
-Hassan Mehdi  
-Built using [SPADE](https://spade-mas.readthedocs.io/) and `matplotlib`.
+Built by **Hassan Mehdi** with **Juuso Nikkinen** (TIES454, 2025)  
+Powered by **SPADE**, **matplotlib**, and **Flask**
 
 ---
 
 ## 📜 License
 
-MIT License. Feel free to use, modify, and share.
+MIT License. Free to use, extend, and contribute.
